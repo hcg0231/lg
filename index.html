@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>垃圾小网站</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置 Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#FF7D00',
+            dark: '#1E1E2E',
+            'dark-light': '#383847',
+            light: '#F8FAFC',
+            gray: '#94A3B8'
+          },
+          fontFamily: {
+            inter: ['Inter', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .game-shadow {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      }
+      .btn-hover {
+        @apply transition-all duration-300 hover:scale-105 active:scale-95;
+      }
+      .game-transition {
+        @apply transition-all duration-500 ease-in-out;
+      }
+    }
+  </style>
+  
+  <!-- 引入 Inter 字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-dark to-dark-light min-h-screen font-inter text-light overflow-x-hidden">
+  <!-- 导航栏 -->
+  <header class="sticky top-0 z-50 bg-dark/80 backdrop-blur-md border-b border-primary/20">
+    <div class="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-gamepad text-secondary text-2xl"></i>
+        <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">经典游戏合集</h1>
+      </div>
+      
+      <nav class="w-full md:w-auto mt-4 md:mt-0">
+        <ul class="flex flex-wrap gap-2 md:gap-4 justify-center">
+          <li>
+            <button id="minesweeper-btn" class="game-btn px-4 py-2 rounded-lg bg-primary/20 hover:bg-primary/40 btn-hover active">
+              <i class="fa fa-bomb mr-2"></i>扫雷
+            </button>
+          </li>
+          <li>
+            <button id="tetris-btn" class="game-btn px-4 py-2 rounded-lg bg-primary/20 hover:bg-primary/40 btn-hover">
+              <i class="fa fa-cubes mr-2"></i>俄罗斯方块
+            </button>
+          </li>
+          <li>
+            <button id="snake-btn" class="game-btn px-4 py-2 rounded-lg bg-primary/20 hover:bg-primary/40 btn-hover">
+              <i class="fa fa-cutlery mr-2"></i>贪吃蛇
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- 游戏区域 -->
+    <div class="max-w-4xl mx-auto">
+      <!-- 游戏标题和状态 -->
+      <div class="mb-6 text-center">
+        <h2 id="game-title" class="text-[clamp(1.5rem,3vw,2rem)] font-bold mb-2">扫雷</h2>
+        <p id="game-description" class="text-gray">经典的扫雷游戏，找出所有地雷而不触发它们</p>
+      </div>
+      
+      <!-- 游戏设置区域 -->
+      <div id="game-settings" class="mb-6 bg-dark-light/50 rounded-xl p-4 game-shadow">
+        <!-- 扫雷设置 -->
+        <div id="minesweeper-settings" class="game-settings-content">
+          <div class="flex flex-wrap gap-4 items-center justify-center">
+            <div>
+              <label class="block text-sm mb-1">难度</label>
+              <select id="minesweeper-difficulty" class="bg-dark border border-primary/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="easy">简单 (9×9, 10雷)</option>
+                <option value="medium">中等 (16×16, 40雷)</option>
+                <option value="hard">困难 (16×30, 99雷)</option>
+                <option value="custom">自定义</option>
+              </select>
+            </div>
+            
+            <!-- 自定义难度设置 -->
+            <div id="custom-minesweeper-settings" class="hidden w-full md:w-auto mt-4 md:mt-0 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm mb-1">行数</label>
+                <input type="number" id="custom-rows" min="5" max="20" value="10" 
+                  class="bg-dark border border-primary/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary w-full">
+              </div>
+              <div>
+                <label class="block text-sm mb-1">列数</label>
+                <input type="number" id="custom-cols" min="5" max="40" value="10" 
+                  class="bg-dark border border-primary/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary w-full">
+              </div>
+              <div>
+                <label class="block text-sm mb-1">地雷数</label>
+                <input type="number" id="custom-mines" min="1" max="200" value="15" 
+                  class="bg-dark border border-primary/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary w-full">
+              </div>
+            </div>
+            
+            <button id="minesweeper-restart" class="bg-secondary text-dark font-semibold px-4 py-2 rounded-lg btn-hover">
+              <i class="fa fa-refresh mr-1"></i> 重新开始
+            </button>
+          </div>
+        </div>
+        
+        <!-- 俄罗斯方块设置 -->
+        <div id="tetris-settings" class="game-settings-content hidden">
+          <div class="flex flex-wrap gap-4 items-center justify-center">
+            <div>
+              <label class="block text-sm mb-1">速度</label>
+              <input type="range" id="tetris-speed" min="1" max="10" value="5" 
+                class="w-40 accent-primary">
+              <span id="tetris-speed-value" class="ml-2">中等</span>
+            </div>
+            <button id="tetris-start" class="bg-secondary text-dark font-semibold px-4 py-2 rounded-lg btn-hover">
+              <i class="fa fa-play mr-1"></i> 开始游戏
+            </button>
+            <button id="tetris-restart" class="bg-primary text-light font-semibold px-4 py-2 rounded-lg btn-hover">
+              <i class="fa fa-refresh mr-1"></i> 重新开始
+            </button>
+          </div>
+        </div>
+        
+        <!-- 贪吃蛇设置 -->
+        <div id="snake-settings" class="game-settings-content hidden">
+          <div class="flex flex-wrap gap-4 items-center justify-center">
+            <div>
+              <label class="block text-sm mb-1">难度</label>
+              <select id="snake-difficulty" class="bg-dark border border-primary/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="easy">简单</option>
+                <option value="medium" selected>中等</option>
+                <option value="hard">困难</option>
+              </select>
+            </div>
+            <button id="snake-start" class="bg-secondary text-dark font-semibold px-4 py-2 rounded-lg btn-hover">
+              <i class="fa fa-play mr-1"></i> 开始游戏
+            </button>
+            <button id="snake-restart" class="bg-primary text-light font-semibold px-4 py-2 rounded-lg btn-hover">
+              <i class="fa fa-refresh mr-1"></i> 重新开始
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 游戏分数/状态显示 -->
+      <div id="game-stats" class="mb-6 flex justify-center gap-6">
+        <div class="bg-dark-light/70 rounded-lg px-4 py-2 min-w-[120px] text-center">
+          <p class="text-sm text-gray">已用时</p>
+          <p id="game-time" class="text-xl font-bold">00:00</p>
+        </div>
+        <div class="bg-dark-light/70 rounded-lg px-4 py-2 min-w-[120px] text-center">
+          <p class="text-sm text-gray">分数</p>
+          <p id="game-score" class="text-xl font-bold">0</p>
+        </div>
+      </div>
+      
+      <!-- 游戏画布容器 -->
+      <div class="flex justify-center mb-8">
+        <div id="game-container" class="relative game-shadow rounded-xl overflow-hidden bg-dark-light p-4">
+          <!-- 扫雷游戏 -->
+          <div id="minesweeper-game" class="game-content">
+            <div id="minesweeper-board" class="grid gap-1"></div>
+          </div>
+          
+          <!-- 俄罗斯方块游戏 -->
+          <div id="tetris-game" class="game-content hidden">
+            <canvas id="tetris-board" width="300" height="600" class="bg-dark"></canvas>
+          </div>
+          
+          <!-- 贪吃蛇游戏 -->
+          <div id="snake-game" class="game-content hidden">
+            <canvas id="snake-board" width="400" height="400" class="bg-dark"></canvas>
+          </div>
+          
+          <!-- 游戏开始遮罩 -->
+          <div id="game-start-overlay" class="absolute inset-0 bg-dark/90 backdrop-blur-sm flex flex-col items-center justify-center">
+            <h3 id="start-overlay-title" class="text-2xl font-bold mb-6">准备开始</h3>
+            <button id="start-overlay-btn" class="bg-secondary text-dark font-semibold px-6 py-3 rounded-lg btn-hover">
+              <i class="fa fa-play mr-2"></i>开始游戏
+            </button>
+          </div>
+          
+          <!-- 游戏结束遮罩 -->
+          <div id="game-overlay" class="absolute inset-0 bg-dark/80 backdrop-blur-sm flex flex-col items-center justify-center hidden">
+            <h3 id="overlay-title" class="text-2xl font-bold mb-2">游戏结束</h3>
+            <p id="overlay-message" class="mb-6">你的得分是: <span id="overlay-score">0</span></p>
+            <button id="overlay-restart" class="bg-secondary text-dark font-semibold px-6 py-3 rounded-lg btn-hover">
+              再玩一次
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 游戏控制说明 -->
+      <div id="game-controls" class="bg-dark-light/30 rounded-xl p-6 mb-8">
+        <h3 class="text-xl font-semibold mb-4">游戏控制</h3>
+        <ul id="controls-list" class="space-y-2 text-gray">
+          <li><i class="fa fa-mouse-pointer text-secondary mr-2"></i> 左键点击：揭开格子</li>
+          <li><i class="fa fa-hand-paper-o text-secondary mr-2"></i> 右键点击：标记地雷</li>
+          <li><i class="fa fa-refresh text-secondary mr-2"></i> 重新开始：重置当前游戏</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-dark/80 backdrop-blur-md border-t border-primary/20 py-6">
+    <div class="container mx-auto px-4 text-center text-gray">
+      <p>© 2023 经典游戏合集 | 用现代技术重现经典游戏体验</p>
+    </div>
+  </footer>
+
+  <script>
+    // 全局变量
+    let currentGame = 'minesweeper';
+    let gameInterval;
+    let gameTime = 0;
+    let gameScore = 0;
+    let timerRunning = false;
+    let gameStarted = false; // 新增：标记游戏是否已开始
+    
+    // DOM 元素
+    const gameBtns = document.querySelectorAll('.game-btn');
+    const gameContents = document.querySelectorAll('.game-content');
+    const gameSettingsContents = document.querySelectorAll('.game-settings-content');
+    const gameTitle = document.getElementById('game-title');
+    const gameDescription = document.getElementById('game-description');
+    const gameTimeEl = document.getElementById('game-time');
+    const gameScoreEl = document.getElementById('game-score');
+    const controlsList = document.getElementById('controls-list');
+    const gameOverlay = document.getElementById('game-overlay');
+    const gameStartOverlay = document.getElementById('game-start-overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlayMessage = document.getElementById('overlay-message');
+    const overlayScore = document.getElementById('overlay-score');
+    const overlayRestart = document.getElementById('overlay-restart');
+    const startOverlayBtn = document.getElementById('start-overlay-btn');
+    const startOverlayTitle = document.getElementById('start-overlay-title');
+    
+    // 游戏切换函数
+    function switchGame(gameName) {
+      // 停止当前游戏
+      stopGame();
+      
+      // 更新当前游戏
+      currentGame = gameName;
+      
+      // 更新按钮状态
+      gameBtns.forEach(btn => {
+        if (btn.id === `${gameName}-btn`) {
+          btn.classList.add('active', 'bg-primary/40');
+          btn.classList.remove('bg-primary/20');
+        } else {
+          btn.classList.remove('active', 'bg-primary/40');
+          btn.classList.add('bg-primary/20');
+        }
+      });
+      
+      // 显示对应的游戏内容和设置
+      gameContents.forEach(content => {
+        content.classList.add('hidden');
+      });
+      document.getElementById(`${gameName}-game`).classList.remove('hidden');
+      
+      gameSettingsContents.forEach(setting => {
+        setting.classList.add('hidden');
+      });
+      document.getElementById(`${gameName}-settings`).classList.remove('hidden');
+      
+      // 更新游戏标题和描述
+      updateGameInfo();
+      
+      // 更新控制说明
+      updateControls();
+      
+      // 初始化游戏
+      initGame();
+      
+      // 对于俄罗斯方块和贪吃蛇，显示开始界面
+      if (currentGame === 'tetris' || currentGame === 'snake') {
+        gameStartOverlay.classList.remove('hidden');
+        gameStarted = false;
+        startOverlayTitle.textContent = `准备开始${currentGame === 'tetris' ? '俄罗斯方块' : '贪吃蛇'}`;
+      } else {
+        gameStartOverlay.classList.add('hidden');
+        gameStarted = true;
+      }
+    }
+    
+    // 更新游戏信息
+    function updateGameInfo() {
+      switch(currentGame) {
+        case 'minesweeper':
+          gameTitle.textContent = '扫雷';
+          gameDescription.textContent = '经典的扫雷游戏，找出所有地雷而不触发它们';
+          break;
+        case 'tetris':
+          gameTitle.textContent = '俄罗斯方块';
+          gameDescription.textContent = '移动和旋转方块，填满一行以消除得分';
+          break;
+        case 'snake':
+          gameTitle.textContent = '贪吃蛇';
+          gameDescription.textContent = '控制蛇吃食物，让它变得更长，但不要撞到墙壁或自己';
+          break;
+      }
+    }
+    
+    // 更新控制说明
+    function updateControls() {
+      let controls = '';
+      
+      switch(currentGame) {
+        case 'minesweeper':
+          controls = `
+            <li><i class="fa fa-mouse-pointer text-secondary mr-2"></i> 左键点击：揭开格子</li>
+            <li><i class="fa fa-hand-paper-o text-secondary mr-2"></i> 右键点击：标记地雷</li>
+            <li><i class="fa fa-refresh text-secondary mr-2"></i> 重新开始：重置当前游戏</li>
+          `;
+          break;
+        case 'tetris':
+          controls = `
+            <li><i class="fa fa-arrow-left text-secondary mr-2"></i> 左箭头：向左移动</li>
+            <li><i class="fa fa-arrow-right text-secondary mr-2"></i> 右箭头：向右移动</li>
+            <li><i class="fa fa-arrow-down text-secondary mr-2"></i> 下箭头：加速下落</li>
+            <li><i class="fa fa-arrow-up text-secondary mr-2"></i> 上箭头：旋转方块</li>
+            <li><i class="fa fa-space-shuttle text-secondary mr-2"></i> 空格：直接落到底部</li>
+            <li><i class="fa fa-refresh text-secondary mr-2"></i> 重新开始：重置当前游戏</li>
+          `;
+          break;
+        case 'snake':
+          controls = `
+            <li><i class="fa fa-arrow-left text-secondary mr-2"></i> 左箭头：向左移动</li>
+            <li><i class="fa fa-arrow-right text-secondary mr-2"></i> 右箭头：向右移动</li>
+            <li><i class="fa fa-arrow-up text-secondary mr-2"></i> 上箭头：向上移动</li>
+            <li><i class="fa fa-arrow-down text-secondary mr-2"></i> 下箭头：向下移动</li>
+            <li><i class="fa fa-refresh text-secondary mr-2"></i> 重新开始：重置当前游戏</li>
+          `;
+          break;
+      }
+      
+      controlsList.innerHTML = controls;
+    }
+    
+    // 初始化游戏
+    function initGame() {
+      // 重置游戏状态
+      resetGameState();
+      
+      // 根据当前游戏初始化
+      switch(currentGame) {
+        case 'minesweeper':
+          initMinesweeper();
+          break;
+        case 'tetris':
+          initTetris(false); // 不自动开始
+          break;
+        case 'snake':
+          initSnake(false); // 不自动开始
+          break;
+      }
+    }
+    
+    // 开始游戏（新增函数）
+    function startCurrentGame() {
+      if (gameStarted) return;
+      
+      gameStartOverlay.classList.add('hidden');
+      gameStarted = true;
+      startTimer();
+      
+      switch(currentGame) {
+        case 'tetris':
+          startTetris();
+          break;
+        case 'snake':
+          startSnake();
+          break;
+      }
+    }
+    
+    // 重置游戏状态
+    function resetGameState() {
+      // 重置时间和分数
+      gameTime = 0;
+      gameScore = 0;
+      updateTimeDisplay();
+      updateScoreDisplay();
+      
+      // 停止计时器
+      stopTimer();
+      
+      // 隐藏游戏结束遮罩
+      gameOverlay.classList.add('hidden');
+      
+      // 重置游戏开始状态
+      gameStarted = false;
+    }
+    
+    // 开始计时器
+    function startTimer() {
+      if (!timerRunning) {
+        timerRunning = true;
+        gameInterval = setInterval(() => {
+          gameTime++;
+          updateTimeDisplay();
+        }, 1000);
+      }
+    }
+    
+    // 停止计时器
+    function stopTimer() {
+      timerRunning = false;
+      clearInterval(gameInterval);
+    }
+    
+    // 更新时间显示
+    function updateTimeDisplay() {
+      const minutes = Math.floor(gameTime / 60).toString().padStart(2, '0');
+      const seconds = (gameTime % 60).toString().padStart(2, '0');
+      gameTimeEl.textContent = `${minutes}:${seconds}`;
+    }
+    
+    // 更新分数显示
+    function updateScoreDisplay() {
+      gameScoreEl.textContent = gameScore;
+    }
+    
+    // 增加分数
+    function addScore(points) {
+      gameScore += points;
+      updateScoreDisplay();
+    }
+    
+    // 游戏结束
+    function gameOver(isWin = false) {
+      stopTimer();
+      gameStarted = false;
+      
+      // 更新游戏结束遮罩
+      overlayTitle.textContent = isWin ? '恭喜你赢了！' : '游戏结束';
+      overlayScore.textContent = gameScore;
+      overlayMessage.textContent = isWin ? '太棒了，你成功了！得分：' : '再接再厉！得分：';
+      gameOverlay.classList.remove('hidden');
+    }
+    
+    // 停止当前游戏
+    function stopGame() {
+      stopTimer();
+      gameStarted = false;
+      
+      // 根据当前游戏停止
+      switch(currentGame) {
+        case 'minesweeper':
+          // 扫雷不需要特别的停止操作
+          break;
+        case 'tetris':
+          stopTetris();
+          break;
+        case 'snake':
+          stopSnake();
+          break;
+      }
+    }
+    
+    // 重新开始当前游戏
+    function restartGame() {
+      initGame();
+      
+      // 对于俄罗斯方块和贪吃蛇，显示开始界面
+      if (currentGame === 'tetris' || currentGame === 'snake') {
+        gameStartOverlay.classList.remove('hidden');
+        gameStarted = false;
+      } else {
+        gameStarted = true;
+      }
+    }
+    
+    // 扫雷游戏相关变量和函数
+    let minesweeperBoard = [];
+    let minesweeperConfig = {
+      easy: { rows: 9, cols: 9, mines: 10 },
+      medium: { rows: 16, cols: 16, mines: 40 },
+      hard: { rows: 16, cols: 30, mines: 99 },
+      custom: { rows: 10, cols: 10, mines: 15 }
+    };
+    let currentMinesweeperConfig = minesweeperConfig.easy;
+    let minesweeperRevealed = 0;
+    let minesweeperGameStarted = false;
+    let minesweeperFirstClick = true;
+    
+    // 初始化扫雷游戏
+    function initMinesweeper() {
+      const difficulty = document.getElementById('minesweeper-difficulty').value;
+      
+      // 处理自定义难度
+      if (difficulty === 'custom') {
+        const rows = parseInt(document.getElementById('custom-rows').value);
+        const cols = parseInt(document.getElementById('custom-cols').value);
+        let mines = parseInt(document.getElementById('custom-mines').value);
+        
+        // 验证输入值
+        const maxMines = Math.floor(rows * cols * 0.3); // 最多为总格子的30%
+        mines = Math.min(mines, maxMines);
+        mines = Math.max(mines, 1);
+        
+        // 更新输入框显示的值（可能已被修正）
+        document.getElementById('custom-mines').value = mines;
+        
+        currentMinesweeperConfig = { rows, cols, mines };
+      } else {
+        currentMinesweeperConfig = minesweeperConfig[difficulty];
+      }
+      
+      const boardEl = document.getElementById('minesweeper-board');
+      boardEl.innerHTML = '';
+      
+      // 设置网格布局
+      boardEl.style.gridTemplateColumns = `repeat(${currentMinesweeperConfig.cols}, 30px)`;
+      
+      // 初始化游戏板
+      minesweeperBoard = [];
+      minesweeperRevealed = 0;
+      minesweeperGameStarted = false;
+      minesweeperFirstClick = true;
+      
+      for (let i = 0; i < currentMinesweeperConfig.rows; i++) {
+        minesweeperBoard[i] = [];
+        for (let j = 0; j < currentMinesweeperConfig.cols; j++) {
+          minesweeperBoard[i][j] = {
+            isMine: false,
+            isRevealed: false,
+            isFlagged: false,
+            neighborMines: 0,
+            element: null
+          };
+          
+          // 创建单元格元素
+          const cell = document.createElement('div');
+          cell.classList.add('minesweeper-cell', 'w-7', 'h-7', 'sm:w-8', 'sm:h-8', 
+            'bg-primary/30', 'hover:bg-primary/50', 'transition-all', 'duration-200', 
+            'flex', 'items-center', 'justify-center', 'cursor-pointer', 'font-bold', 
+            'text-xs', 'sm:text-sm', 'rounded-sm');
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          
+          // 添加点击事件
+          cell.addEventListener('click', () => handleMinesweeperCellClick(i, j));
+          cell.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            handleMinesweeperCellRightClick(i, j);
+          });
+          
+          boardEl.appendChild(cell);
+          minesweeperBoard[i][j].element = cell;
+        }
+      }
+    }
+    
+    // 处理扫雷单元格左键点击
+    function handleMinesweeperCellClick(row, col) {
+      const cell = minesweeperBoard[row][col];
+      
+      // 如果已经揭示或标记，不做处理
+      if (cell.isRevealed || cell.isFlagged) return;
+      
+      // 第一次点击时放置地雷
+      if (minesweeperFirstClick) {
+        placeMinesweeperMines(row, col);
+        calculateMinesweeperNeighbors();
+        minesweeperFirstClick = false;
+        minesweeperGameStarted = true;
+        startTimer();
+      }
+      
+      // 如果是地雷，游戏结束
+      if (cell.isMine) {
+        revealAllMinesweeperMines();
+        gameOver();
+        return;
+      }
+      
+      // 揭示单元格
+      revealMinesweeperCell(row, col);
+      
+      // 检查是否获胜
+      checkMinesweeperWin();
+    }
+    
+    // 处理扫雷单元格右键点击（标记地雷）
+    function handleMinesweeperCellRightClick(row, col) {
+      const cell = minesweeperBoard[row][col];
+      
+      // 如果已经揭示，不做处理
+      if (cell.isRevealed) return;
+      
+      // 如果游戏还没开始，开始计时
+      if (!minesweeperGameStarted) {
+        minesweeperGameStarted = true;
+        startTimer();
+      }
+      
+      // 切换标记状态
+      cell.isFlagged = !cell.isFlagged;
+      
+      // 更新UI
+      if (cell.isFlagged) {
+        cell.element.innerHTML = '<i class="fa fa-flag text-secondary"></i>';
+        cell.element.classList.remove('bg-primary/30', 'hover:bg-primary/50');
+        cell.element.classList.add('bg-secondary/30');
+      } else {
+        cell.element.innerHTML = '';
+        cell.element.classList.remove('bg-secondary/30');
+        cell.element.classList.add('bg-primary/30', 'hover:bg-primary/50');
+      }
+      
+      // 检查是否获胜
+      checkMinesweeperWin();
+    }
+    
+    // 放置扫雷的地雷
+    function placeMinesweeperMines(firstRow, firstCol) {
+      let minesPlaced = 0;
+      
+      while (minesPlaced < currentMinesweeperConfig.mines) {
+        const row = Math.floor(Math.random() * currentMinesweeperConfig.rows);
+        const col = Math.floor(Math.random() * currentMinesweeperConfig.cols);
+        
+        // 确保不在第一次点击的位置及其周围放置地雷
+        const isFirstClickArea = Math.abs(row - firstRow) <= 1 && Math.abs(col - firstCol) <= 1;
+        
+        if (!minesweeperBoard[row][col].isMine && !isFirstClickArea) {
+          minesweeperBoard[row][col].isMine = true;
+          minesPlaced++;
+        }
+      }
+    }
+    
+    // 计算扫雷单元格周围的地雷数
+    function calculateMinesweeperNeighbors() {
+      for (let i = 0; i < currentMinesweeperConfig.rows; i++) {
+        for (let j = 0; j < currentMinesweeperConfig.cols; j++) {
+          if (!minesweeperBoard[i][j].isMine) {
+            let count = 0;
+            
+            // 检查周围8个方向
+            for (let di = -1; di <= 1; di++) {
+              for (let dj = -1; dj <= 1; dj++) {
+                if (di === 0 && dj === 0) continue;
+                
+                const ni = i + di;
+                const nj = j + dj;
+                
+                if (ni >= 0 && ni < currentMinesweeperConfig.rows && 
+                    nj >= 0 && nj < currentMinesweeperConfig.cols && 
+                    minesweeperBoard[ni][nj].isMine) {
+                  count++;
+                }
+              }
+            }
+            
+            minesweeperBoard[i][j].neighborMines = count;
+          }
+        }
+      }
+    }
+    
+    // 揭示扫雷单元格
+    function revealMinesweeperCell(row, col) {
+      const cell = minesweeperBoard[row][col];
+      
+      // 如果已经揭示或标记，不做处理
+      if (cell.isRevealed || cell.isFlagged) return;
+      
+      // 标记为已揭示
+      cell.isRevealed = true;
+      minesweeperRevealed++;
+      
+      // 更新UI
+      cell.element.classList.remove('bg-primary/30', 'hover:bg-primary/50', 'cursor-pointer');
+      cell.element.classList.add('bg-dark/50');
+      
+      // 如果有周围地雷，显示数字
+      if (cell.neighborMines > 0) {
+        cell.element.textContent = cell.neighborMines;
+        
+        // 设置不同数字的颜色
+        const colors = [
+          '', // 0
+          'text-blue-400', // 1
+          'text-green-400', // 2
+          'text-red-400', // 3
+          'text-purple-400', // 4
+          'text-yellow-500', // 5
+          'text-cyan-400', // 6
+          'text-pink-400', // 7
+          'text-gray-400'  // 8
+        ];
+        
+        cell.element.classList.add(colors[cell.neighborMines]);
+      } else {
+        // 如果没有周围地雷，递归揭示周围单元格
+        for (let di = -1; di <= 1; di++) {
+          for (let dj = -1; dj <= 1; dj++) {
+            if (di === 0 && dj === 0) continue;
+            
+            const ni = row + di;
+            const nj = col + dj;
+            
+            if (ni >= 0 && ni < currentMinesweeperConfig.rows && 
+                nj >= 0 && nj < currentMinesweeperConfig.cols) {
+              revealMinesweeperCell(ni, nj);
+            }
+          }
+        }
+      }
+    }
+    
+    // 揭示所有地雷
+    function revealAllMinesweeperMines() {
+      for (let i = 0; i < currentMinesweeperConfig.rows; i++) {
+        for (let j = 0; j < currentMinesweeperConfig.cols; j++) {
+          const cell = minesweeperBoard[i][j];
+          
+          if (cell.isMine) {
+            cell.element.innerHTML = '<i class="fa fa-bomb text-red-500"></i>';
+            cell.element.classList.remove('bg-primary/30', 'hover:bg-primary/50', 'bg-secondary/30', 'cursor-pointer');
+            cell.element.classList.add('bg-dark/50');
+          } else if (cell.isFlagged) {
+            // 错误标记
+            cell.element.innerHTML = '<i class="fa fa-times text-red-500"></i>';
+          }
+        }
+      }
+    }
+    
+    // 检查扫雷是否获胜
+    function checkMinesweeperWin() {
+      const totalCells = currentMinesweeperConfig.rows * currentMinesweeperConfig.cols;
+      const nonMineCells = totalCells - currentMinesweeperConfig.mines;
+      
+      // 如果所有非地雷单元格都已揭示，获胜
+      if (minesweeperRevealed === nonMineCells) {
+        // 标记所有剩余地雷
+        for (let i = 0; i < currentMinesweeperConfig.rows; i++) {
+          for (let j = 0; j < currentMinesweeperConfig.cols; j++) {
+            const cell = minesweeperBoard[i][j];
+            if (cell.isMine && !cell.isFlagged) {
+              cell.element.innerHTML = '<i class="fa fa-flag text-secondary"></i>';
+              cell.element.classList.remove('bg-primary/30', 'hover:bg-primary/50', 'cursor-pointer');
+              cell.element.classList.add('bg-secondary/30');
+              cell.isFlagged = true;
+            }
+          }
+        }
+        
+        // 计算得分（剩余时间转换为分数）
+        addScore(Math.max(0, 1000 - gameTime * 10));
+        gameOver(true);
+      }
+    }
+    
+    // 俄罗斯方块游戏相关变量和函数
+    const tetrisShapes = [
+      [[1, 5, 9, 13], [4, 5, 6, 7]], // I
+      [[1, 2, 5, 9], [0, 4, 5, 6], [1, 5, 9, 8], [4, 5, 6, 10]], // J
+      [[1, 2, 6, 10], [5, 6, 7, 9], [2, 6, 10, 11], [3, 5, 6, 7]], // L
+      [[1, 2, 5, 6]], // O
+      [[6, 7, 9, 10], [1, 5, 6, 10]], // S
+      [[1, 5, 6, 9], [4, 5, 6, 10], [2, 5, 6, 9], [4, 5, 6, 9]], // T
+      [[4, 5, 9, 10], [2, 6, 5, 9]] // Z
+    ];
+    
+    const tetrisColors = [
+      '#00FFFF', // I
+      '#0000FF', // J
+      '#FF7F00', // L
+      '#FFFF00', // O
+      '#00FF00', // S
+      '#800080', // T
+      '#FF0000'  // Z
+    ];
+    
+    let tetrisCanvas, tetrisCtx;
+    let tetrisBoard;
+    let tetrisRow = 20;
+    let tetrisCol = 10;
+    let tetrisScore = 0;
+    let tetrisCurrentPiece = null;
+    let tetrisCurrentX = 0;
+    let tetrisCurrentY = 0;
+    let tetrisDropInterval = 1000; // 初始下落速度，毫秒
+    let tetrisDropCounter = 0;
+    let tetrisLastTime = 0;
+    let tetrisGameOver = false;
+    let tetrisSpeedValue = 5;
+    let tetrisAnimationId = null; // 用于存储动画帧ID
+    
+    // 初始化俄罗斯方块游戏
+    function initTetris(autoStart = true) {
+      tetrisCanvas = document.getElementById('tetris-board');
+      tetrisCtx = tetrisCanvas.getContext('2d');
+      
+      // 设置画布大小和缩放
+      tetrisCanvas.width = 300;
+      tetrisCanvas.height = 600;
+      
+      // 初始化游戏板
+      tetrisBoard = createTetrisBoard();
+      tetrisScore = 0;
+      tetrisGameOver = false;
+      tetrisAnimationId = null;
+      
+      // 设置下落速度
+      updateTetrisSpeed();
+      
+      // 创建新方块
+      createTetrisPiece();
+      
+      // 绘制初始界面
+      drawTetris();
+      
+      // 如果不需要自动开始，则不启动游戏循环
+      if (!autoStart) {
+        return;
+      }
+      
+      // 开始游戏循环
+      tetrisLastTime = 0;
+      tetrisDropCounter = 0;
+      startTimer();
+      tetrisAnimationId = requestAnimationFrame(tetrisGameLoop);
+    }
+    
+    // 开始俄罗斯方块游戏（新增函数）
+    function startTetris() {
+      if (tetrisAnimationId) {
+        cancelAnimationFrame(tetrisAnimationId);
+      }
+      
+      tetrisLastTime = 0;
+      tetrisDropCounter = 0;
+      tetrisGameOver = false;
+      tetrisAnimationId = requestAnimationFrame(tetrisGameLoop);
+    }
+    
+    // 创建俄罗斯方块游戏板
+    function createTetrisBoard() {
+      return Array.from({ length: tetrisRow }, () => Array(tetrisCol).fill(0));
+    }
+    
+    // 创建新的俄罗斯方块
+    function createTetrisPiece() {
+      const type = Math.floor(Math.random() * tetrisShapes.length);
+      tetrisCurrentPiece = {
+        type: type,
+        shape: tetrisShapes[type][0],
+        color: tetrisColors[type],
+        rotation: 0
+      };
+      
+      // 初始位置（居中顶部）
+      tetrisCurrentX = Math.floor(tetrisCol / 2) - 2;
+      tetrisCurrentY = 0;
+      
+      // 检查游戏是否结束（新方块无法放置）
+      if (checkTetrisCollision()) {
+        tetrisGameOver = true;
+        gameOver();
+      }
+    }
+    
+    // 俄罗斯方块游戏循环
+    function tetrisGameLoop(time = 0) {
+      if (tetrisGameOver || !gameStarted) return;
+      
+      const deltaTime = time - tetrisLastTime;
+      tetrisLastTime = time;
+      
+      tetrisDropCounter += deltaTime;
+      if (tetrisDropCounter > tetrisDropInterval) {
+        tetrisMoveDown();
+        tetrisDropCounter = 0;
+      }
+      
+      // 绘制游戏
+      drawTetris();
+      
+      tetrisAnimationId = requestAnimationFrame(tetrisGameLoop);
+    }
+    
+    // 绘制俄罗斯方块游戏
+    function drawTetris() {
+      const blockSize = tetrisCanvas.width / tetrisCol;
+      
+      // 清空画布
+      tetrisCtx.fillStyle = '#1E1E2E';
+      tetrisCtx.fillRect(0, 0, tetrisCanvas.width, tetrisCanvas.height);
+      
+      // 绘制游戏板上已固定的方块
+      for (let y = 0; y < tetrisRow; y++) {
+        for (let x = 0; x < tetrisCol; x++) {
+          if (tetrisBoard[y][x]) {
+            const color = tetrisColors[tetrisBoard[y][x] - 1];
+            drawTetrisBlock(x, y, color, blockSize);
+          }
+        }
+      }
+      
+      // 绘制当前方块
+      if (tetrisCurrentPiece) {
+        tetrisCurrentPiece.shape.forEach((index, i) => {
+          const x = index % 4 + tetrisCurrentX;
+          const y = Math.floor(index / 4) + tetrisCurrentY;
+          
+          if (y >= 0) { // 只绘制可见的方块
+            drawTetrisBlock(x, y, tetrisCurrentPiece.color, blockSize);
+          }
+        });
+      }
+    }
+    
+    // 绘制单个俄罗斯方块
+    function drawTetrisBlock(x, y, color, blockSize) {
+      tetrisCtx.fillStyle = color;
+      tetrisCtx.fillRect(x * blockSize, y * blockSize, blockSize - 1, blockSize - 1);
+      
+      // 添加边框效果
+      tetrisCtx.strokeStyle = '#383847';
+      tetrisCtx.strokeRect(x * blockSize, y * blockSize, blockSize - 1, blockSize - 1);
+    }
+    
+    // 检查俄罗斯方块碰撞
+    function checkTetrisCollision() {
+      return tetrisCurrentPiece.shape.some((index) => {
+        const x = index % 4 + tetrisCurrentX;
+        const y = Math.floor(index / 4) + tetrisCurrentY;
+        
+        return (
+          x < 0 || // 左边界
+          x >= tetrisCol || // 右边界
+          y >= tetrisRow || // 下边界
+          (y >= 0 && tetrisBoard[y][x]) // 已有方块
+        );
+      });
+    }
+    
+    // 旋转俄罗斯方块
+    function rotateTetrisPiece() {
+      if (!gameStarted) return;
+      
+      const originalRotation = tetrisCurrentPiece.rotation;
+      tetrisCurrentPiece.rotation = (tetrisCurrentPiece.rotation + 1) % tetrisShapes[tetrisCurrentPiece.type].length;
+      tetrisCurrentPiece.shape = tetrisShapes[tetrisCurrentPiece.type][tetrisCurrentPiece.rotation];
+      
+      // 如果旋转后碰撞，尝试偏移
+      if (checkTetrisCollision()) {
+        // 右移
+        tetrisCurrentX++;
+        if (checkTetrisCollision()) {
+          // 左移2格（回到原位再左移1格）
+          tetrisCurrentX -= 2;
+          if (checkTetrisCollision()) {
+            // 还原旋转
+            tetrisCurrentX++;
+            tetrisCurrentPiece.rotation = originalRotation;
+            tetrisCurrentPiece.shape = tetrisShapes[tetrisCurrentPiece.type][originalRotation];
+          }
+        }
+      }
+    }
+    
+    // 移动俄罗斯方块
+    function moveTetris(dir) {
+      if (!gameStarted) return false;
+      
+      tetrisCurrentX += dir;
+      
+      // 如果移动后碰撞，还原位置
+      if (checkTetrisCollision()) {
+        tetrisCurrentX -= dir;
+        return false;
+      }
+      
+      drawTetris();
+      return true;
+    }
+    
+    // 俄罗斯方块下移
+    function tetrisMoveDown() {
+      if (!gameStarted) return false;
+      
+      tetrisCurrentY++;
+      
+      // 如果下移后碰撞，固定方块
+      if (checkTetrisCollision()) {
+        tetrisCurrentY--;
+        fixTetrisPiece();
+        clearTetrisLines();
+        createTetrisPiece();
+        return false;
+      }
+      
+      drawTetris();
+      return true;
+    }
+    
+    // 快速下落俄罗斯方块
+    function tetrisDrop() {
+      if (!gameStarted) return;
+      
+      while (tetrisMoveDown());
+    }
+    
+    // 固定俄罗斯方块到游戏板
+    function fixTetrisPiece() {
+      tetrisCurrentPiece.shape.forEach((index) => {
+        const x = index % 4 + tetrisCurrentX;
+        const y = Math.floor(index / 4) + tetrisCurrentY;
+        
+        if (y >= 0) {
+          tetrisBoard[y][x] = tetrisCurrentPiece.type + 1;
+        }
+      });
+    }
+    
+    // 消除完整的行
+    function clearTetrisLines() {
+      let linesCleared = 0;
+      
+      for (let y = tetrisRow - 1; y >= 0; y--) {
+        let isLineComplete = true;
+        
+        for (let x = 0; x < tetrisCol; x++) {
+          if (!tetrisBoard[y][x]) {
+            isLineComplete = false;
+            break;
+          }
+        }
+        
+        if (isLineComplete) {
+          // 移除当前行，并在顶部添加新行
+          for (let y2 = y; y2 > 0; y2--) {
+            tetrisBoard[y2] = [...tetrisBoard[y2 - 1]];
+          }
+          tetrisBoard[0] = Array(tetrisCol).fill(0);
+          
+          // 重新检查当前行（因为新行落下）
+          y++;
+          
+          linesCleared++;
+        }
+      }
+      
+      // 根据消除的行数增加分数
+      if (linesCleared > 0) {
+        // 计分规则：1行100分，2行300分，3行500分，4行800分
+        const lineScores = [0, 100, 300, 500, 800];
+        addScore(lineScores[linesCleared] * (tetrisSpeedValue / 5 + 1)); // 根据速度增加分数
+      }
+    }
+    
+    // 更新俄罗斯方块速度
+    function updateTetrisSpeed() {
+      const speedInput = document.getElementById('tetris-speed');
+      tetrisSpeedValue = parseInt(speedInput.value);
+      
+      // 更新速度显示
+      const speedLabels = ['极慢', '很慢', '慢速', '较慢', '中慢', '中等', '中快', '快速', '很快', '极快'];
+      document.getElementById('tetris-speed-value').textContent = speedLabels[tetrisSpeedValue - 1];
+      
+      // 计算下落间隔（速度越高，间隔越小）
+      tetrisDropInterval = 1000 - (tetrisSpeedValue - 1) * 100;
+    }
+    
+    // 停止俄罗斯方块游戏
+    function stopTetris() {
+      if (tetrisAnimationId) {
+        cancelAnimationFrame(tetrisAnimationId);
+        tetrisAnimationId = null;
+      }
+      tetrisGameOver = true;
+    }
+    
+    // 贪吃蛇游戏相关变量和函数
+    let snakeCanvas, snakeCtx;
+    let snake = [];
+    let snakeFood = null;
+    let snakeDirection = 'right';
+    let snakeNextDirection = 'right';
+    let snakeGridSize = 20;
+    let snakeRows, snakeCols;
+    let snakeSpeed = 150; // 初始速度，毫秒
+    let snakeGameLoopId = null;
+    
+    // 初始化贪吃蛇游戏
+    function initSnake(autoStart = true) {
+      snakeCanvas = document.getElementById('snake-board');
+      snakeCtx = snakeCanvas.getContext('2d');
+      
+      // 设置画布大小
+      snakeCanvas.width = 400;
+      snakeCanvas.height = 400;
+      
+      // 计算行数和列数
+      snakeRows = snakeCanvas.height / snakeGridSize;
+      snakeCols = snakeCanvas.width / snakeGridSize;
+      
+      // 初始化蛇
+      snake = [
+        { x: 10, y: 10 },
+        { x: 9, y: 10 },
+        { x: 8, y: 10 }
+      ];
+      
+      // 设置初始方向
+      snakeDirection = 'right';
+      snakeNextDirection = 'right';
+      
+      // 生成食物
+      generateSnakeFood();
+      
+      // 设置速度
+      updateSnakeSpeed();
+      
+      // 绘制初始界面
+      drawSnake();
+      
+      // 如果不需要自动开始，则不启动游戏循环
+      if (!autoStart) {
+        snakeGameLoopId = null;
+        return;
+      }
+      
+      // 开始游戏循环
+      startTimer();
+      snakeGameLoopId = setInterval(snakeGameLoop, snakeSpeed);
+    }
+    
+    // 开始贪吃蛇游戏（新增函数）
+    function startSnake() {
+      if (snakeGameLoopId) {
+        clearInterval(snakeGameLoopId);
+      }
+      
+      snakeGameLoopId = setInterval(snakeGameLoop, snakeSpeed);
+    }
+    
+    // 贪吃蛇游戏循环
+    function snakeGameLoop() {
+      if (!gameStarted) return;
+      
+      // 更新方向
+      snakeDirection = snakeNextDirection;
+      
+      // 获取蛇头位置
+      const head = { x: snake[0].x, y: snake[0].y };
+      
+      // 根据方向移动蛇头
+      switch (snakeDirection) {
+        case 'up':
+          head.y--;
+          break;
+        case 'down':
+          head.y++;
+          break;
+        case 'left':
+          head.x--;
+          break;
+        case 'right':
+          head.x++;
+          break;
+      }
+      
+      // 检查碰撞
+      if (
+        head.x < 0 || 
+        head.x >= snakeCols || 
+        head.y < 0 || 
+        head.y >= snakeRows ||
+        checkSnakeSelfCollision(head)
+      ) {
+        // 游戏结束
+        stopSnake();
+        gameOver();
+        return;
+      }
+      
+      // 将新头部添加到蛇
+      snake.unshift(head);
+      
+      // 检查是否吃到食物
+      if (head.x === snakeFood.x && head.y === snakeFood.y) {
+        // 增加分数
+        addScore(10);
+        
+        // 生成新食物
+        generateSnakeFood();
+      } else {
+        // 移除尾部
+        snake.pop();
+      }
+      
+      // 绘制游戏
+      drawSnake();
+    }
+    
+    // 绘制贪吃蛇游戏
+    function drawSnake() {
+      // 清空画布
+      snakeCtx.fillStyle = '#1E1E2E';
+      snakeCtx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+      
+      // 绘制蛇
+      snake.forEach((segment, index) => {
+        // 蛇头使用不同颜色
+        if (index === 0) {
+          snakeCtx.fillStyle = '#FF7D00'; // 橙色
+        } else {
+          snakeCtx.fillStyle = '#165DFF'; // 蓝色
+        }
+        
+        // 绘制方块
+        snakeCtx.fillRect(
+          segment.x * snakeGridSize,
+          segment.y * snakeGridSize,
+          snakeGridSize - 1,
+          snakeGridSize - 1
+        );
+      });
+      
+      // 绘制食物
+      if (snakeFood) {
+        snakeCtx.fillStyle = '#FF3366'; // 粉红色
+        snakeCtx.fillRect(
+          snakeFood.x * snakeGridSize,
+          snakeFood.y * snakeGridSize,
+          snakeGridSize - 1,
+          snakeGridSize - 1
+        );
+      }
+    }
+    
+    // 生成贪吃蛇食物
+    function generateSnakeFood() {
+      let newFood;
+      
+      // 确保食物不会出现在蛇身上
+      do {
+        newFood = {
+          x: Math.floor(Math.random() * snakeCols),
+          y: Math.floor(Math.random() * snakeRows)
+        };
+      } while (checkSnakeSelfCollision(newFood));
+      
+      snakeFood = newFood;
+    }
+    
+    // 检查贪吃蛇是否自撞
+    function checkSnakeSelfCollision(position) {
+      return snake.some(segment => segment.x === position.x && segment.y === position.y);
+    }
+    
+    // 改变贪吃蛇方向
+    function changeSnakeDirection(newDirection) {
+      if (!gameStarted) return;
+      
+      // 防止180度转向
+      if (
+        (newDirection === 'up' && snakeDirection !== 'down') ||
+        (newDirection === 'down' && snakeDirection !== 'up') ||
+        (newDirection === 'left' && snakeDirection !== 'right') ||
+        (newDirection === 'right' && snakeDirection !== 'left')
+      ) {
+        snakeNextDirection = newDirection;
+      }
+    }
+    
+    // 更新贪吃蛇速度
+    function updateSnakeSpeed() {
+      const difficulty = document.getElementById('snake-difficulty').value;
+      
+      switch (difficulty) {
+        case 'easy':
+          snakeSpeed = 200;
+          break;
+        case 'medium':
+          snakeSpeed = 150;
+          break;
+        case 'hard':
+          snakeSpeed = 100;
+          break;
+      }
+      
+      // 如果游戏正在运行，更新循环速度
+      if (snakeGameLoopId && gameStarted) {
+        clearInterval(snakeGameLoopId);
+        snakeGameLoopId = setInterval(snakeGameLoop, snakeSpeed);
+      }
+    }
+    
+    // 停止贪吃蛇游戏
+    function stopSnake() {
+      if (snakeGameLoopId) {
+        clearInterval(snakeGameLoopId);
+        snakeGameLoopId = null;
+      }
+    }
+    
+    // 事件监听
+    document.addEventListener('DOMContentLoaded', () => {
+      // 游戏切换按钮
+      document.getElementById('minesweeper-btn').addEventListener('click', () => switchGame('minesweeper'));
+      document.getElementById('tetris-btn').addEventListener('click', () => switchGame('tetris'));
+      document.getElementById('snake-btn').addEventListener('click', () => switchGame('snake'));
+      
+      // 开始按钮
+      startOverlayBtn.addEventListener('click', startCurrentGame);
+      document.getElementById('tetris-start').addEventListener('click', startCurrentGame);
+      document.getElementById('snake-start').addEventListener('click', startCurrentGame);
+      
+      // 重新开始按钮
+      document.getElementById('minesweeper-restart').addEventListener('click', restartGame);
+      document.getElementById('tetris-restart').addEventListener('click', restartGame);
+      document.getElementById('snake-restart').addEventListener('click', restartGame);
+      overlayRestart.addEventListener('click', restartGame);
+      
+      // 扫雷难度变化
+      document.getElementById('minesweeper-difficulty').addEventListener('change', function() {
+        // 显示/隐藏自定义设置
+        const customSettings = document.getElementById('custom-minesweeper-settings');
+        if (this.value === 'custom') {
+          customSettings.classList.remove('hidden');
+        } else {
+          customSettings.classList.add('hidden');
+        }
+        initMinesweeper();
+      });
+      
+      // 自定义扫雷设置变化
+      document.getElementById('custom-rows').addEventListener('change', initMinesweeper);
+      document.getElementById('custom-cols').addEventListener('change', initMinesweeper);
+      document.getElementById('custom-mines').addEventListener('change', initMinesweeper);
+      
+      // 俄罗斯方块速度变化
+      document.getElementById('tetris-speed').addEventListener('input', updateTetrisSpeed);
+      
+      // 贪吃蛇难度变化
+      document.getElementById('snake-difficulty').addEventListener('change', updateSnakeSpeed);
+      
+      // 键盘事件
+      document.addEventListener('keydown', (e) => {
+        if (currentGame === 'tetris' && !tetrisGameOver) {
+          switch(e.key) {
+            case 'ArrowLeft':
+              moveTetris(-1);
+              break;
+            case 'ArrowRight':
+              moveTetris(1);
+              break;
+            case 'ArrowDown':
+              tetrisMoveDown();
+              break;
+            case 'ArrowUp':
+              rotateTetrisPiece();
+              break;
+            case ' ': // 空格键
+              tetrisDrop();
+              break;
+          }
+        } else if (currentGame === 'snake' && snakeGameLoopId) {
+          switch(e.key) {
+            case 'ArrowUp':
+              changeSnakeDirection('up');
+              break;
+            case 'ArrowDown':
+              changeSnakeDirection('down');
+              break;
+            case 'ArrowLeft':
+              changeSnakeDirection('left');
+              break;
+            case 'ArrowRight':
+              changeSnakeDirection('right');
+              break;
+          }
+        }
+      });
+      
+      // 初始化默认游戏
+      initGame();
+    });
+  </script>
+</body>
+</html>
+    
